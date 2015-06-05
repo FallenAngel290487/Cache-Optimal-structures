@@ -19,6 +19,8 @@ int ind;
 
 int child[100010][2];
 
+int veb_order[100010];
+
 int power(int base, int exp)
 {
 	int ans=1;
@@ -41,6 +43,7 @@ void veb(int start, int end, int height, int maxht)
 	if(height==1)
 	{
 		ans[mid]=ind++;
+		veb_order[ind-1]=arr[mid];
 	}
 	else
 	{
@@ -72,6 +75,39 @@ void veb(int start, int end, int height, int maxht)
 }
 
 
+int binarysearch_inorder(int start,int end,int value)
+{
+	if(start<=end)
+	{
+		int mid=(start+end)/2;
+
+		if(arr[mid]<value)
+			return binarysearch_inorder(mid+1,end,value);
+		else if(arr[mid]>value)
+			return binarysearch_inorder(start,mid-1,value);
+		else
+			return mid;
+	}
+
+	return -1;
+}
+
+
+int binarysearch_veb(int key,int value)
+{
+
+//	PII(key,veb_order[key]);
+	if(key!=0)
+	{
+		if(veb_order[key]<value)
+			return binarysearch_veb(child[key][1],value);
+		else if(veb_order[key]>value)
+			return binarysearch_veb(child[key][0],value);
+		else
+			return key;
+	}
+	return -1;
+}
 
 int main()
 {
@@ -89,7 +125,11 @@ int main()
 	REPA(i,1,n+1)
 		printf("%d ",ans[i]);
 	cout<<endl;
-	REPA(i,1,n+1)
+/*	REPA(i,1,n+1)
 		PII(child[i][0],child[i][1]);
+*/	
+	int no;
+	PI(binarysearch_veb(1,388));
+	
 	return 0;
 }
