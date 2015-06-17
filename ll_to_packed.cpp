@@ -57,10 +57,10 @@ void percolate_up(int,int);
 void level_order_veb(int);
 void print_packed_array();
 void print_link_list();
+void split(int);
 
 
 int ht,n;										//ht = ht of veb tree = no. of nodes in one node of tree bounds = ht ans 2ht-1
-int maxheight=20;
 int maxnum=4;
 int leaves=8;
 
@@ -69,10 +69,11 @@ node_veb layer1[16];									//veb with max height 20
 node_array layer2[8];
 node_ll* layer3=NULL;
 
+
+//For packed array densities
 double Tmin=0.5, Tmax=1;									//min and max for maximum densities
 double Dmin=0.125, Dmax=0.25;									//min and max for minimum densities
-double blocks=log2(1048576);									
-int largest_index=-1;
+double blocks=log2(leaves);									
 
 
 //required for vEb initialize
@@ -80,6 +81,9 @@ int binary[16];
 int ind=1;
 int cnt;
 
+
+/*Initialization of list, array and veb
+*/
 
 void initialize_list()
 {
@@ -176,7 +180,7 @@ int binarysearch_veb(int key, int value)
 			return binarysearch_veb(layer1[key].r,value);
 		else
 		{
-			int key1 = binarysearch_veb(layer1[key].r,value);
+				int key1 = binarysearch_veb(layer1[key].r,value);
 			int key2 = binarysearch_veb(layer1[key].l,value);
 			if(layer1[key1].val <= value || layer1[key].val == INT_MAX)
 				return key1;
@@ -187,7 +191,7 @@ int binarysearch_veb(int key, int value)
 	return -1;
 }
 
-/*Inserting in the data structure*/
+/*Functions required for Inserting in the data structure*/
 
 void insert(int val)
 {
@@ -230,6 +234,9 @@ void insert(int val)
 	packed_arrange(tmp1->ltop,tmp->ltop);
 
 }
+
+
+/*Packed array reordering as per densities*/
 
 void packed_arrange(int index,int endindex)
 {
@@ -308,6 +315,8 @@ void packed_arrange(int index,int endindex)
 	percolate_up(index,index+count);
 }
 
+
+/*Changing VeB as per the new packed array by percolating upwards*/
 void percolate_up(int ind1,int ind2)
 {
 	queue<int>q;
@@ -328,12 +337,13 @@ void percolate_up(int ind1,int ind2)
 			q.push(layer1[current].p);
 	}
 }
+/*Insertion ends*/
 
-
+/*Traversal of different layers of  the structure*/
 
 void level_order_veb(int key)
 {
-	printf("\n\n############################LEVEL ORDER TRAVERSAL OF LAYER 1 ########################################\n\n");
+	printf("\n\n############################LEVEL ORDER TRA	VERSAL OF LAYER 1 ########################################\n\n");
 	queue< pair<int,int> > q;
 	
 	int curlevel=1;
@@ -386,6 +396,33 @@ void print_link_list()
 }
 
 
+void split(int value)
+{
+	int key=binarysearch_veb(1,value);
+	int pos=-1;
+
+	node_ll* tmp = layer2[layer1[key].vtop].ptol;
+
+	REP(i,tmp->num)
+	{	if(tmp->arr[i]==value)
+		{
+			pos=i;
+			break;
+		}
+	}
+
+	if(pos<0)
+	{
+		printf("The key doesn't exist\n");
+		return;
+	}
+}
+
+vector<int> path_return(int key,int value)
+{
+
+}
+
 int main()
 {
 
@@ -403,24 +440,28 @@ int main()
 
 
 	initialize_list();
-	insert(2);
-	insert(3);
-	insert(4);
-	insert(6);
 	insert(7);
-	insert(8);
+	insert(6);
+	insert(5);
+	insert(4);
+	insert(3);
+	insert(2);
 	insert(9);
 	insert(5);
 	insert(10);
 	insert(11);
 	insert(12);
 	insert(13);
-
 	insert(1);
+
 	level_order_veb(1);
 
 	cout<<endl;
-//	REP(i,leaves)
+//	REP(i,14)
+//		PI(binarysearch_veb(1,i+1));
 //		printf("%d ",layer2[i].val);//p,layer1[i+1].l,layer1[i+1].r,layer1[i+1].leaf);
+
+	split(1);
+	split(14);
 	return 0;
 }
