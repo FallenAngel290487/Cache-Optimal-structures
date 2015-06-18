@@ -48,16 +48,16 @@ struct node_array
 	node_ll* ptol;
 };
 
-void initialize_list();
-void veb_initialize(int,int,int,int,int);
-int binarysearch_veb(int,int);
-void insert(int);
-void packed_arrange(int,int);
-void percolate_up(int,int);
-void level_order_veb(int);
-void print_packed_array();
-void print_link_list();
-void split(int);
+void initialize_list(node_ll*,node_array*,int);
+void veb_initialize(node_veb*,node_array*,int,int,int,int,int);
+int binarysearch_veb(node_veb*,int,int);
+void insert(node_veb*, node_array*, int);
+void packed_arrange(node_veb*,node_array*,int,int);
+void percolate_up(node_veb*,node_array*,int,int);
+void level_order_veb(node_veb*,int);
+void print_packed_array(node_array*,int);
+void print_link_list(node_ll*);
+void split(node_veb*,int);
 
 
 int ht,n;										//ht = ht of veb tree = no. of nodes in one node of tree bounds = ht ans 2ht-1
@@ -77,7 +77,7 @@ double blocks=log2(leaves);
 
 
 //required for vEb initialize
-int binary[16];
+int binary[32];
 int ind=1;
 int cnt;
 
@@ -85,18 +85,18 @@ int cnt;
 /*Initialization of list, array and veb
 */
 
-void initialize_list()
+void initialize_list(node_ll* root,node_array* arr_head, int leaf)
 {
 	node_ll* head=new node_ll;
 	head->arr.clear();
 	head->num=0;
 	head->next=NULL;
-	layer3 = head;
+	root = head;
 	head->ltop=0;
-	layer2[0].ptol = head;
+	arr_head[0].ptol = head;
 
 	node_ll* tmp1=head;
-	REPA(i,1,leaves)
+	REPA(i,1,leaf)
 	{
 		node_ll* tmp2=new node_ll;
 		tmp2->arr.clear();
@@ -104,7 +104,7 @@ void initialize_list()
 		tmp2->next=NULL;
 		tmp1->next=tmp2;
 		tmp2->ltop=i;
-		layer2[i].ptol = tmp2;
+		arr_head[i].ptol = tmp2;
 		tmp1=tmp1->next;
 	}
 }
@@ -117,20 +117,20 @@ void initialize_list()
   maxht = height of the of the biggest possible subtree this node can be root of
 */
 
-void veb_initialize(int start, int end, int height, int curht, int maxht)
+void veb_initialize(node_veb* arr_veb,node_array* arr_pkd, int start, int end, int height, int curht, int maxht)
 {
 	int mid=(start+end)/2;
 
 	if(height == 1)
 	{
 		binary[mid]=ind++;
-		layer1[ind-1].val=INT_MAX;
-		layer1[ind-1].leaf=false;
-		layer1[ind-1].vtop=-1;
+		arr_veb[ind-1].val=INT_MAX;
+		arr_veb[ind-1].leaf=false;
+		arr_veb[ind-1].vtop=-1;
 		if(curht==ht)
-		{	layer1[ind-1].leaf = true;
-			layer1[ind-1].vtop = cnt++;
-			layer2[cnt-1].ptov = ind-1;
+		{	arr_veb[ind-1].leaf = true;
+			arr_veb[ind-1].vtop = cnt++;
+			arr_pkd[cnt-1].ptov = ind-1;
 		}
 	}
 	else
@@ -143,21 +143,21 @@ void veb_initialize(int start, int end, int height, int curht, int maxht)
 		int nextht=pow(2,half);
 		int mx=pow(2,maxht-half)-1;
 
-		veb_initialize(start,end,half,curht,maxht);
+		veb_initialize(arr_veb,arr_pkd,start,end,half,curht,maxht);
 	
 		REP(i,nextht)
 		{
-			veb_initialize(start,start+mx-1,secondhalf,curht+half,maxht-half);
+			veb_initialize(arr_veb,arr_pkd,start,start+mx-1,secondhalf,curht+half,maxht-half);
 
 			if(count%2)
 			{	
-				layer1[binary[start-1]].r = binary[((2*start)+mx-1)/2];				//right child
-				layer1[binary[((2*start)+mx-1)/2]].p = binary[start-1];
+				arr_veb[binary[start-1]].r = binary[((2*start)+mx-1)/2];				//right child
+				arr_veb[binary[((2*start)+mx-1)/2]].p = binary[start-1];
 			}
 			else
-			{
-				layer1[binary[start+mx]].l = binary[((2*start)+mx-1)/2];			//left child
-				layer1[binary[((2*start)+mx-1)/2]].p = binary[start+mx];
+			{ 
+				arr_veb[binary[start+mx]].l = binary[((2*start)+mx-1)/2];			//left child
+				arr_veb[binary[((2*start)+mx-1)/2]].p = binary[start+mx];
 			}
 			count++;
 			start=start+mx+1;
@@ -168,21 +168,21 @@ void veb_initialize(int start, int end, int height, int curht, int maxht)
 
 /* Binary search in VeB to find the node which has the largest value that is smaller than value*/
 
-int binarysearch_veb(int key, int value)
+int binarysearch_veb(node_veb* arr_veb,int key, int value)
 {
 	if(key!=0)
 	{
-		if(layer1[key].leaf == true)
+		if(arr_veb[key].leaf == true)
 			return key;
-		if(layer1[key].leaf == false && (layer1[layer1[key].l].val >= value || layer1[layer1[key].l].val == INT_MAX))
-			return binarysearch_veb(layer1[key].l,value); 
-		else if(layer1[key].leaf == false && layer1[layer1[key].r].val <= value)
-			return binarysearch_veb(layer1[key].r,value);
+		if(arr_veb[key].leaf == false && (arr_veb[arr_veb[key].l].val >= value || arr_veb[arr_veb[key].l].val == INT_MAX))
+			return binarysearch_veb(arr_veb,arr_veb[key].l,value); 
+		else if(arr_veb[key].leaf == false && arr_veb[layer1[key].r].val <= value)
+			return binarysearch_veb(arr_veb,arr_veb[key].r,value);
 		else
 		{
-				int key1 = binarysearch_veb(layer1[key].r,value);
-			int key2 = binarysearch_veb(layer1[key].l,value);
-			if(layer1[key1].val <= value || layer1[key].val == INT_MAX)
+			int key1 = binarysearch_veb(arr_veb,arr_veb[key].r,value);
+			int key2 = binarysearch_veb(arr_veb,arr_veb[key].l,value);
+			if(arr_veb[key1].val <= value || arr_veb[key].val == INT_MAX)
 				return key1;
 			else
 				return key2;
@@ -193,13 +193,13 @@ int binarysearch_veb(int key, int value)
 
 /*Functions required for Inserting in the data structure*/
 
-void insert(int val)
+void insert(node_veb* arr_veb, node_array* arr_pkd, int val)
 {
-	int key = binarysearch_veb(1,val);
+	int key = binarysearch_veb(arr_veb,1,val);
 
-	key = layer1[key].vtop;
+	key = arr_veb[key].vtop;
 
-	node_ll* tmp = layer2[key].ptol;
+	node_ll* tmp = arr_pkd[key].ptol;
 	node_ll* tmp1 = tmp;
 
 	if(tmp->num < maxnum)
@@ -216,7 +216,7 @@ void insert(int val)
 			sort(tmp->arr.begin(),tmp->arr.end());
 			val = tmp->arr.back();
 			tmp->arr.pop_back();
-			layer2[tmp->ltop].val=tmp->arr.front();
+			arr_pkd[tmp->ltop].val=tmp->arr.front();
 			
 			tmp=tmp->next;
 
@@ -224,21 +224,17 @@ void insert(int val)
 
 		tmp->arr.pb(val); 
 		sort(tmp->arr.begin(),tmp->arr.end());
-		layer2[tmp->ltop].val=tmp->arr.front();
+		arr_pkd[tmp->ltop].val=tmp->arr.front();
 		tmp->num++;
 	}
 
-	node_ll* aab = layer3;
-
-	
-	packed_arrange(tmp1->ltop,tmp->ltop);
-
+	packed_arrange(arr_veb,arr_pkd,tmp1->ltop,tmp->ltop);
 }
 
 
 /*Packed array reordering as per densities*/
 
-void packed_arrange(int index,int endindex)
+void packed_arrange(node_veb* arr_veb, node_array* arr_pkd,int index,int endindex)
 {
 	double D=Tmax, diff=(Tmax-Tmin)/blocks,curD;
 	int ele=0, count=1, prev, L_ind1,L_ind2;
@@ -248,11 +244,11 @@ void packed_arrange(int index,int endindex)
 
 	REPA(i,index,index+2)
 	{
-		if(layer2[i].ptol->num!=0)
+		if(arr_pkd[i].ptol->num!=0)
 		{
-			q.push(mp(layer2[i].ptol->arr, layer2[i].ptol->num));
-			layer2[i].ptol->arr=vector<int>();
-			layer2[i].ptol->num=0;
+			q.push(mp(arr_pkd[i].ptol->arr, arr_pkd[i].ptol->num));
+			arr_pkd[i].ptol->arr=vector<int>();
+			arr_pkd[i].ptol->num=0;
 		}
 
 		curD=double(((double)(ele+1))/(double)2);
@@ -261,8 +257,8 @@ void packed_arrange(int index,int endindex)
 		{
 			if(!q.empty())
 			{       ele++;
-				layer2[i].ptol->arr= q.front().first;
-				layer2[i].ptol->num = q.front().second;
+				arr_pkd[i].ptol->arr= q.front().first;
+				arr_pkd[i].ptol->num = q.front().second;
 				q.pop();
 			}
 		}
@@ -279,20 +275,20 @@ void packed_arrange(int index,int endindex)
 
 		REPA(i,index+count,index+2*count)
 		{
-			if(layer2[i].ptol->num!=0)
+			if(arr_pkd[i].ptol->num!=0)
 			{
-				q.push(mp(layer2[i].ptol->arr, layer2[i].ptol->num));
-				layer2[i].ptol->arr=vector<int>();
-				layer2[i].ptol->num=0;
+				q.push(mp(arr_pkd[i].ptol->arr, arr_pkd[i].ptol->num));
+				arr_pkd[i].ptol->arr=vector<int>();
+				arr_pkd[i].ptol->num=0;
 			}
 			curD=double(((double)(ele+1))/(double)(2*count));
 
 			if(curD<=D)
 			{
-				if(!q.empty())
-				{       ele++;
-					layer2[i].ptol->arr = q.front().first;
-					layer2[i].ptol->num = q.front().second;
+ 				if(!q.empty())
+				{	ele++;
+					arr_pkd[i].ptol->arr = q.front().first;
+					arr_pkd[i].ptol->num = q.front().second;
 					q.pop();
 				}
 			}
@@ -304,25 +300,25 @@ void packed_arrange(int index,int endindex)
 
 	REPA(i,index,max(index+count,endindex))
 	{
-		if(layer2[i].ptol->num>0)
+		if(arr_pkd[i].ptol->num>0)
 		{
-			layer1[layer2[i].ptov].val = layer2[i].val = layer2[i].ptol->arr.front();
+			arr_veb[layer2[i].ptov].val = arr_pkd[i].val = arr_pkd[i].ptol->arr.front();
 		}
 		else
-			layer1[layer2[i].ptov].val = layer2[i].val = INT_MAX;
+			arr_veb[layer2[i].ptov].val = arr_pkd[i].val = INT_MAX;
 	}
 
-	percolate_up(index,index+count);
+	percolate_up(arr_veb,arr_pkd,index,index+count);
 }
 
 
 /*Changing VeB as per the new packed array by percolating upwards*/
-void percolate_up(int ind1,int ind2)
+void percolate_up(node_veb* tmp_v, node_array* tmp_p,int ind1,int ind2)
 {
 	queue<int>q;
 
 	REPA(i,ind1,ind2)								//level order percolation so as to avoid errors which may occur if lower level is accessed after upper level
-		q.push(layer2[i].ptov);
+		q.push(tmp_p[i].ptov);
 	
 	int current;
 	while(!q.empty())
@@ -330,20 +326,20 @@ void percolate_up(int ind1,int ind2)
 		current = q.front();
 		q.pop();
 
-		if(layer1[current].leaf == false)
-			layer1[current].val = min(layer1[layer1[current].l].val,layer1[layer1[current].r].val);
+		if(tmp_v[current].leaf == false)
+			tmp_v[current].val = min(tmp_v[tmp_v[current].l].val,tmp_v[tmp_v[current].r].val);
 	
-		if(layer1[current].p>0)
-			q.push(layer1[current].p);
+		if(tmp_v[current].p>0)
+			q.push(tmp_v[current].p);
 	}
 }
 /*Insertion ends*/
 
 /*Traversal of different layers of  the structure*/
 
-void level_order_veb(int key)
+void level_order_veb(node_veb* tmp,int key)
 {
-	printf("\n\n############################LEVEL ORDER TRA	VERSAL OF LAYER 1 ########################################\n\n");
+	printf("\n\n############################LEVEL ORDER TRAVERSAL OF LAYER 1 ########################################\n\n");
 	queue< pair<int,int> > q;
 	
 	int curlevel=1;
@@ -355,9 +351,9 @@ void level_order_veb(int key)
 			curlevel++;
 			cout<<endl;
 		}
-		printf("%d ",layer1[q.front().first].val);
+		printf("%d ",tmp[q.front().first].val);
 
-		if(layer1[q.front().first].leaf == false)
+		if(tmp[q.front().first].leaf == false)
 		{
 			q.push(mp(layer1[q.front().first].l,curlevel+1));
 			q.push(mp(layer1[q.front().first].r,curlevel+1));
@@ -367,20 +363,19 @@ void level_order_veb(int key)
 	printf("\n\n\n\n");
 }
 
-void print_packed_array()
+void print_packed_array(node_array* tmp,int leaf)
 {
 	printf("\n\n##############################PACKED ARRAY#######################\n\n");
 
-	REP(i,leaves)
-		printf("%d ",layer2[i].val);
+	REP(i,leaf)
+		printf("%d ",tmp[i].val);
 	printf("\n\n\n\n");
 }
 
-void print_link_list()
+void print_link_list(node_ll* tmp)
 {
 	printf("\n\n#############################LIST#####################\n\n");
 
-	node_ll* tmp=layer3;
 	while(tmp)
 	{
 		if(tmp->num)
@@ -396,12 +391,12 @@ void print_link_list()
 }
 
 
-void split(int value)
+void split(node_veb* arr_veb, node_array* arr_pkd, int value)
 {
-	int key=binarysearch_veb(1,value);
+	int key=binarysearch_veb(arr_veb,1,value);
 	int pos=-1;
 
-	node_ll* tmp = layer2[layer1[key].vtop].ptol;
+	node_ll* tmp = arr_pkd[arr_veb[key].vtop].ptol;
 
 	REP(i,tmp->num)
 	{	if(tmp->arr[i]==value)
@@ -416,16 +411,42 @@ void split(int value)
 		printf("The key doesn't exist\n");
 		return;
 	}
+
+	int tmppos=key;
+	stack<int> st;
+
+	while(tmppos!=0)
+	{
+		st.push(tmppos);
+		tmppos=arr_veb[tmppos].p;
+	}
+	
+	int path1[100],path2[100];
+
+        ht=5;
+        cnt=0;
+        leaves=16;
+	ind=1;
+				
+	vector<int> sm,la;
+	REP(i,tmp->num)
+	{
+		if(tmp->arr[i]>value)
+			la.pb(tmp->arr[i]);
+		else if(tmp->arr[i]<value)
+			sm.pb(tmp->arr[i]);
+	}
+
+	node_veb tmp_veb[2*16-1];
+	node_array tmp_pkd[16];
+	memset(tmp_pkd,INT_MAX,sizeof(tmp_pkd));
+	veb_initialize(tmp_veb,tmp_pkd,1,2*16-1,5,1,5);
+
 }
 
-vector<int> path_return(int key,int value)
-{
-
-}
 
 int main()
 {
-
 	ht=4;
 	cnt=0;
 	leaves=8;
@@ -436,32 +457,32 @@ int main()
 		layer2[i].ptol = NULL;
 	}
 
-	veb_initialize(1,15,4,1,4);
+	veb_initialize(layer1,layer2,1,15,4,1,4);
 
 
-	initialize_list();
-	insert(7);
-	insert(6);
-	insert(5);
-	insert(4);
-	insert(3);
-	insert(2);
-	insert(9);
-	insert(5);
-	insert(10);
-	insert(11);
-	insert(12);
-	insert(13);
-	insert(1);
+	initialize_list(layer3,layer2,8);
+	insert(layer1,layer2,7);
+	insert(layer1,layer2,6);
+	insert(layer1,layer2,5);
+	insert(layer1,layer2,4);
+	insert(layer1,layer2,3);
+	insert(layer1,layer2,2);
+	insert(layer1,layer2,9);
+	insert(layer1,layer2,5);
+	insert(layer1,layer2,10);
+	insert(layer1,layer2,11);
+	insert(layer1,layer2,12);
+	insert(layer1,layer2,13);
+	insert(layer1,layer2,1);
 
-	level_order_veb(1);
+	level_order_veb(layer1,1);
 
 	cout<<endl;
 //	REP(i,14)
 //		PI(binarysearch_veb(1,i+1));
 //		printf("%d ",layer2[i].val);//p,layer1[i+1].l,layer1[i+1].r,layer1[i+1].leaf);
 
-	split(1);
-	split(14);
+	split(layer1,layer2,13);
+//	split(14);
 	return 0;
 }
